@@ -1,0 +1,53 @@
+#! /bin/sh
+
+#follow thress sentences, you can execute the script in dir modules
+#directly. such . creat_ring.sh which in dir modules
+realpath=$(readlink -f "$0")
+basedir=$(dirname "$realpath")
+
+REMAIN_PACKAGE=TRUE
+
+sudo apt-get install unzip  -y --force-yes
+sudo apt-get install gcc -y --force-yes
+
+if [ -z $1]
+then 
+		echo '$1 is null'
+        sleep 1
+        exit 1
+fi
+
+DEP_DIR=$basedir/package/depend/$1
+TMP=$basedir/tmp
+DEP_TMP=$basedir/tmp/$1
+UNINSTALL=$basedir/uninstall
+mkdir -p $DEP_TMP
+
+
+#TODO may be one loop is better?
+for file in `ls $DEP_DIR/*.tar.gz`
+do 
+        #echo $file
+		tar xfvz $file -C $DEP_TMP
+done
+
+for file in `ls $DEP_DIR/*.zip`
+do 
+        #echo $file
+		unzip $file -d $DEP_TMP
+done
+
+for dir in `ls $DEP_TMP`
+do 
+        cd $DEP_TMP/$dir
+        #pwd
+        sudo python setup.py install --record $UNINSTALL/$dir
+        cd $DEP_TMP
+        #pwd
+done
+
+if [ -z $REMAIN_PACKAGE ]
+then
+		sudo rm -rf $TMP
+fi
+

@@ -1,0 +1,13 @@
+python-keystoneclient  0.2.5
+keystone   stable/grizzly
+
+RUN:
+
+if you just install, run  
+	1)sudo ./keystone 
+    2)keystone-manage db_sync
+	3)sqlite3 keystone.db
+	4)keystone-all
+if you want record the process of install. run as fllow
+	sudo ./keystone  > log 2>&1
+

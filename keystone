@@ -1,0 +1,67 @@
+#! /bin/sh
+
+#follow thress sentences, you can execute the script in dir modules
+#directly. such . creat_ring.sh which in dir modules
+realpath=$(readlink -f "$0")
+basedir=$(dirname "$realpath")
+
+KEYSTONE_USER=root
+KEYSTONE_GROUP=root
+KEYSTONE_DIR=$basedir/package
+KEYSTONE_ADMIN_TOKEN="admin"
+KEYSTONE_PUBLIC_PORT=5000
+KEYSTONE_ADMIN_PORT=35357
+KEYSTONE_BIND_HOST="0.0.0.0"
+#if keystone is sqlite, the dir can be any dir you want, such as /var/lib/keystone/keystone.db
+#else keystone is mysql, the dir such as mysql://root:12345@192.168.1.111/keystone.
+KEYSTONE_SQL_DIR="sqlite:///keystone.db"
+KEYSTONE_TOKEN_FORMAT="UUID"
+KEYSTONE_SQL=sqlite3
+
+UNINSTALL=$basedir/uninstall
+
+
+
+# the locate of requirements file may change 
+sudo apt-get update
+sudo apt-get install $KEYSTONE_SQL  -y --force-yes
+sudo apt-get install libxml2-dev libxslt-dev -y --force-yes
+sudo apt-get install python-dev gcc python-pip -y --force-yes
+#if you get the keystone from the github.com this is necessary
+sudo apt-get install git-core -y --force-yes
+#sudo pip install -r tools/pip-requires
+
+sudo $basedir/install_dep  other
+sudo $basedir/install_dep  keystone_depend
+sudo $basedir/install_dep  keystoneclient_depend
+
+
+cd $KEYSTONE_DIR/python-keystoneclint
+sudo python setup.py install --record $UNINSTALL/python-keystoneclient
+cd $KEYSTONE_DIR
+
+cd $KEYSTONE_DIR/keystone
+sudo python setup.py install --record $UNINSTALL/keystone
+cd $KEYSTONE_DIR
+
+
+mkdir -p /etc/keystone
+chown -R $KEYSTONE_USER:$KEYSTONE_GROUP /etc/keystone
+
+cat > /etc/keystone/default_catalog < $KEYSTONE_DIR/keystone/etc/default_catalog.templates
+
+cat > /etc/keystone/logging.conf < $KEYSTONE_DIR/keystone/etc/logging.conf.sample
+
+cat > /etc/keystone/policy.json < $KEYSTONE_DIR/keystone/etc/policy.json
+
+cat > /etc/keystone/keystone.conf < $KEYSTONE_DIR/keystone/etc/keystone.conf.sample
+
+sed -i -e "s|# admin_token.*|admin_token = $KEYSTONE_ADMIN_TOKEN|"  \
+       -e "s|# bind_host.*|bind_host = $KEYSTONE_BIND_HOST|"  \
+       -e "s|# public_port.*|public_port = $KEYSTONE_PUBLIC_PORT|" \
+       -e "s|# admin_port.*|admin_port = $KEYSTONE_ADMIN_PORT|"  \
+       -e "s|# connection.*|connection = $KEYSTONE_SQL_DIR|"   \
+       -e "s|#token_format.*|token_format = $KEYSTONE_TOKEN_FORMAT|" \
+   /etc/keystone/keystone.conf
+
+
