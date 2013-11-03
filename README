@@ -11,3 +11,4 @@ if you just install, run
 if you want record the process of install. run as fllow
 	sudo ./keystone  > log 2>&1
 
+after install is ok, refer to http://www.cnblogs.com/fczjuever/p/3278072.html
